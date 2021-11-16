@@ -1,28 +1,72 @@
 import { isEventName } from "../utils/dom";
 
 type VDomProps = { [key: string]: any };
-interface VDom {
+
+type VDomChildren = Array<VDom> | string;
+interface VDomObject {
 	type: string;
 	props: VDomProps;
-	children: Array<VDom> | string;
+	children: VDomChildren;
 }
 
-export function createVDom(
-	type: string,
-	props: VDomProps = {},
-	children: Array<VDom> | string = []
-): VDom {
-	return {
-		type,
-		props,
-		children,
-	};
+type VDom = VDomObject | string;
+
+interface CreateAction {
+	type: "CREATE";
+}
+
+interface RemoveAction {
+	type: "REMOVE";
+}
+
+interface ReplaceAction {
+	type: "REPLACE";
+	newVDom: VDom;
+}
+
+interface SetPropAction {
+	type: "SET_PROP";
+	name: string;
+	value: any;
+}
+
+interface RemovePropAction {
+	type: "REMOVE_PROP";
+	name: string;
+	value: any;
+}
+
+type UpdatePropAction = SetPropAction | RemovePropAction;
+
+export interface UpdateAction {
+	type: "UPDATE";
+	props: Array<UpdatePropAction>;
+	children: Array<DiffAction | null>;
+}
+
+type DiffAction = CreateAction | RemoveAction | ReplaceAction | UpdateAction;
+
+function isVDomObject(vDom: VDom): vDom is VDomObject {
+	return typeof vDom !== "string";
+}
+
+export function changed(newVDom: VDom | string, oldVDom: VDom | string) {
+	return (
+		typeof newVDom !== typeof oldVDom ||
+		(typeof newVDom === "string" && newVDom !== oldVDom) ||
+		// @ts-expect-error
+		newVDom.type !== oldVDom.type
+	);
 }
 
 export function createHTMLElement(
 	vDom: VDom,
 	parent?: HTMLElement
-): HTMLElement {
+): HTMLElement | Text {
+	if (typeof vDom === "string") {
+		return document.createTextNode(vDom);
+	}
+
 	const { type, props, children } = vDom;
 	const elem = document.createElement(type);
 	setProps(elem, props);
@@ -42,10 +86,78 @@ export function createHTMLElement(
 	return elem;
 }
 
-export function setProps(elem: HTMLElement, props: VDomProps) {
-	Object.keys(props).forEach((key) => {
-		setProp(elem, key, props[key]);
+export function createVDom(
+	type: string,
+	props: VDomProps = {},
+	children: Array<VDom> | string = []
+): VDomObject {
+	return {
+		type,
+		props,
+		children,
+	};
+}
+
+export function diff(
+	newVDom: VDom | undefined,
+	oldVDom: VDom | undefined
+): DiffAction | null {
+	if (!oldVDom) {
+		return { type: "CREATE" };
+	}
+
+	if (!newVDom) {
+		return { type: "REMOVE" };
+	}
+
+	if (changed(newVDom, oldVDom)) {
+		return { type: "REPLACE", newVDom };
+	}
+
+	if (isVDomObject(newVDom) && isVDomObject(oldVDom) && newVDom.type) {
+		return {
+			type: "UPDATE",
+			props: diffProps(newVDom, oldVDom),
+			children: diffChildren(newVDom, oldVDom),
+		};
+	}
+
+	return null;
+}
+
+export function diffChildren(
+	newVDom: VDomObject,
+	oldVDom: VDomObject
+): Array<DiffAction | null> {
+	const actions: Array<DiffAction | null> = [];
+	const actionsLength = Math.max(
+		newVDom.children.length,
+		oldVDom.children.length
+	);
+
+	for (let i = 0; i < actionsLength; i++) {
+		actions[i] = diff(newVDom.children[i], oldVDom.children[i]);
+	}
+	return actions;
+}
+
+export function diffProps(
+	newVDom: VDomObject,
+	oldVDom: VDomObject
+): Array<UpdatePropAction> {
+	const actions: Array<UpdatePropAction> = [];
+	const props = Object.assign({}, newVDom.props, oldVDom.props);
+	Object.keys(props).forEach((name) => {
+		const newVal = newVDom.props[name];
+		const oldVal = oldVDom.props[name];
+		if (!newVal) {
+			actions.push({ type: "REMOVE_PROP", name, value: oldVal });
+		} else if (!oldVal || newVal !== oldVal) {
+			actions.push({ type: "SET_PROP", name, value: newVal });
+		}
 	});
+
+	return actions;
 }
 
 export function setProp(elem: HTMLElement, key: string, value: any): void {
@@ -57,4 +169,10 @@ export function setProp(elem: HTMLElement, key: string, value: any): void {
 	}
 
 	elem.setAttribute(key, value);
+}
+
+export function setProps(elem: HTMLElement, props: VDomProps) {
+	Object.keys(props).forEach((key) => {
+		setProp(elem, key, props[key]);
+	});
 }
