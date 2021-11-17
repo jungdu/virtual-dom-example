@@ -118,7 +118,7 @@ describe("vdom", () => {
 		it("Create string element", () => {
 			const elem = createHTMLElement("Hello World");
 
-			console.log("elem :", elem);
+			expect(elem.textContent).toBe("Hello World");
 		});
 	});
 
@@ -186,8 +186,31 @@ describe("vdom", () => {
 				});
 			});
 
-			it("Get action to replace element", () => {
-				// TODO
+			it("Get action to replace element to element has another type", () => {
+				const action = diff(
+					createVDom("li", {}, []),
+					createVDom("div", {}, [])
+				);
+
+				expect(action).toEqual({
+					type: "REPLACE",
+					newVDom: createVDom("li", {}, []),
+				});
+			});
+
+			it("Get action to replace element to text", () => {
+				const action = diff("Text node", createVDom("li", {}, []));
+
+				expect(action).toEqual({ type: "REPLACE", newVDom: "Text node" });
+			});
+
+			it("Get action to replace text node to element", () => {
+				const action = diff(createVDom("li", {}, []), "Text node");
+
+				expect(action).toEqual({
+					type: "REPLACE",
+					newVDom: createVDom("li", {}, []),
+				});
 			});
 
 			it("Get action to update props", () => {
