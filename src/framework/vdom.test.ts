@@ -3,6 +3,7 @@ import {
 	createHTMLElement,
 	createVDom,
 	diff,
+	diffChildren,
 	diffProps,
 	setProp,
 	UpdateAction,
@@ -34,12 +35,12 @@ describe("vdom", () => {
 				{
 					type: "li",
 					props: {},
-					children: "first item",
+					children: ["first item"],
 				},
 				{
 					type: "li",
 					props: {},
-					children: "second item",
+					children: ["second item"],
 				},
 			],
 		});
@@ -167,6 +168,55 @@ describe("vdom", () => {
 			});
 		});
 
+		describe("diffChildren function", () => {
+			it("Get actions to replace child text to other text", () => {
+				const action = diffChildren(
+					createVDom("p", {}, "Hello World"),
+					createVDom("p", {}, "Bye World")
+				);
+
+				expect(action).toEqual([{ type: "REPLACE", newVDom: "Hello World" }]);
+			});
+
+			it("Get action to replace child text to span element", () => {
+				const action = diffChildren(
+					createVDom("p", {}, [createVDom("span", {}, [])]),
+					createVDom("p", {}, "some text")
+				);
+
+				expect(action).toEqual([
+					{ type: "REPLACE", newVDom: createVDom("span", {}, []) },
+				]);
+			});
+
+			it("Get action to replace child span element to text", () => {
+				const action = diffChildren(
+					createVDom("p", {}, "some text"),
+					createVDom("p", {}, [createVDom("span", {}, [])])
+				);
+				expect(action).toEqual([{ type: "REPLACE", newVDom: "some text" }]);
+			});
+
+			it("Get action to create nested children", () => {
+				const action = diffChildren(
+					createVDom("p", {}, [createVDom("span", {}, "hello world")]),
+					createVDom("p", {}, [createVDom("span", {}, [])])
+				);
+
+				expect(action).toEqual([
+					{
+						type: "UPDATE",
+						props: [],
+						children: [
+							{
+								type: "CREATE",
+							},
+						],
+					},
+				]);
+			});
+		});
+
 		describe("diff function", () => {
 			it("Get action to create element", () => {
 				const action = diff(createVDom("li", {}, []), undefined);
@@ -241,10 +291,6 @@ describe("vdom", () => {
 						},
 					])
 				);
-			});
-
-			it("Get actions to update children", () => {
-				// TODO
 			});
 		});
 	});

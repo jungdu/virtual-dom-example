@@ -94,7 +94,7 @@ export function createVDom(
 	return {
 		type,
 		props,
-		children,
+		children: Array.isArray(children) ? children : [children],
 	};
 }
 
