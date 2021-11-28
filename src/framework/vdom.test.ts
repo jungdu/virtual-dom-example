@@ -121,6 +121,16 @@ describe("vdom", () => {
 
 			expect(elem.textContent).toBe("Hello World");
 		});
+
+		it('Fire click event on created element', (done) => {
+			const elem = createHTMLElement(createVDom("button", {
+				onclick: () => {
+					done();
+				}
+			}), rootDiv);
+
+			elem.dispatchEvent(new window.Event("click"));
+		});
 	});
 
 	describe("Find out differences between two VDom", () => {
