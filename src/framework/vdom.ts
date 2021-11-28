@@ -1,4 +1,4 @@
-import { isEventName } from "../utils/dom";
+import { isEventName } from "../utils/htmlEvent";
 
 type VDomProps = { [key: string]: any };
 

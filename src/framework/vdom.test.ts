@@ -10,7 +10,7 @@ import {
 } from "./vdom";
 
 describe("vdom", () => {
-	it("create vdom object", () => {
+	it("Create vdom object", () => {
 		expect(createVDom("li")).toEqual({
 			type: "li",
 			props: {},
