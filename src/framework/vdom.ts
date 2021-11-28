@@ -9,7 +9,7 @@ interface VDomObject {
 	children: VDomChildren;
 }
 
-type VDom = VDomObject | string;
+export type VDom = VDomObject | string;
 
 interface CreateAction {
 	type: "CREATE";
