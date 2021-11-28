@@ -50,42 +50,7 @@ function isVDomObject(vDom: VDom): vDom is VDomObject {
 	return typeof vDom !== "string";
 }
 
-export function changed(newVDom: VDom | string, oldVDom: VDom | string) {
-	return (
-		typeof newVDom !== typeof oldVDom ||
-		(typeof newVDom === "string" && newVDom !== oldVDom) ||
-		// @ts-expect-error
-		newVDom.type !== oldVDom.type
-	);
-}
-
-export function createHTMLElement(
-	vDom: VDom,
-	parent?: HTMLElement
-): HTMLElement | Text {
-	if (typeof vDom === "string") {
-		return document.createTextNode(vDom);
-	}
-
-	const { type, props, children } = vDom;
-	const elem = document.createElement(type);
-	setProps(elem, props);
-
-	if (typeof children === "string") {
-		elem.textContent = children;
-	} else {
-		children.forEach((child) => {
-			createHTMLElement(child, elem);
-		});
-	}
-
-	if (parent) {
-		parent.appendChild(elem);
-	}
-
-	return elem;
-}
-
+// Virtual DOM을 생성하는 함수 (리엑트에서는 JSX가 이 역할을 한다.)
 export function createVDom(
 	type: string,
 	props: VDomProps = {},
@@ -98,6 +63,8 @@ export function createVDom(
 	};
 }
 
+
+// 이전 Virtual Dom과 변경될 Virtual DOM을 비교하여 변경될 부분들을 찾는 함수
 export function diff(
 	newVDom: VDom | undefined,
 	oldVDom: VDom | undefined
@@ -160,6 +127,46 @@ export function diffProps(
 	return actions;
 }
 
+export function changed(newVDom: VDom | string, oldVDom: VDom | string) {
+	return (
+		typeof newVDom !== typeof oldVDom ||
+		(typeof newVDom === "string" && newVDom !== oldVDom) ||
+		// @ts-expect-error
+		newVDom.type !== oldVDom.type
+	);
+}
+
+
+// Virtual DOM을 HTMLElement로 만드는 함수
+export function createHTMLElement(
+	vDom: VDom,
+	parent?: HTMLElement
+): HTMLElement | Text {
+	if (typeof vDom === "string") {
+		return document.createTextNode(vDom);
+	}
+
+	const { type, props, children } = vDom;
+	const elem = document.createElement(type);
+	setProps(elem, props);
+
+	if (typeof children === "string") {
+		elem.textContent = children;
+	} else {
+		children.forEach((child) => {
+			createHTMLElement(child, elem);
+		});
+	}
+
+	if (parent) {
+		parent.appendChild(elem);
+	}
+
+	return elem;
+}
+
+
+// Virtual DOM의 props를 HTML의 props로 적용하는 함수
 export function setProp(elem: HTMLElement, key: string, value: any): void {
 	if (key === "className") {
 		elem.className = value;
