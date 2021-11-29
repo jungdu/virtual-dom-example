@@ -53,19 +53,11 @@ export default abstract class Component {
     this.prevView = view;
   }
 
-  private initRender(){
+  render(){
     const view = this.getView();
     const elem = createHTMLElement(view);
     this.parent.appendChild(elem);
 
     this.prevView = view;
-  }
-
-  render(){
-    if(this.prevView){
-      this.rerender();
-    }else{
-      this.initRender()
-    }
   }
 }
