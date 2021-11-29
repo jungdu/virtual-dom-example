@@ -1,3 +1,4 @@
+// https://github.com/heiskr/prezzy-vdom-example 참고.
 import { isEventName } from "../utils/htmlEvent";
 
 type VDomProps = { [key: string]: any };
@@ -50,7 +51,7 @@ function isVDomObject(vDom: VDom): vDom is VDomObject {
 	return typeof vDom !== "string";
 }
 
-// Virtual DOM을 생성하는 함수 (리엑트에서는 JSX가 이 역할을 한다.)
+// Virtual DOM을 생성하는 함수 (리엑트에서는 React.createElement가 이 역할을 한다.)
 export function createVDom(
 	type: string,
 	props: VDomProps = {},
@@ -228,6 +229,7 @@ export function setProp(elem: HTMLElement, key: string, value: any): void {
 		return;
 	} else if (isEventName(key)) {
 		elem[key] = value;
+		return;
 	}
 
 	elem.setAttribute(key, value);
